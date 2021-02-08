@@ -18,7 +18,13 @@
 
 """
 import yaml
+from netmiko import ConnectHandler
 
+
+def send_show_command(device, command):
+    with ConnectHandler(**device) as ssh:
+        ssh.enable()
+        return ssh.send_command(command)
 
 
 if __name__ == "__main__":

@@ -40,8 +40,9 @@ C-3PO,c3po@gmail.com,16/12/2019 17:24
 Функции convert_str_to_datetime и convert_datetime_to_str использовать не обязательно.
 
 """
-
+import csv
 import datetime
+from pprint import pprint
 
 
 def convert_str_to_datetime(datetime_str):
@@ -56,3 +57,45 @@ def convert_datetime_to_str(datetime_obj):
     Конвертирует строку с датой в формате 11/10/2019 14:05 в объект datetime.
     """
     return datetime.datetime.strftime(datetime_obj, "%d/%m/%Y %H:%M")
+
+def write_last_log_to_csv(source_log, output):
+    result = []
+    unique_data = {}
+    
+    with open(source_log, 'r') as scr:
+        reader = csv.reader(scr)
+        headers = next(reader)
+        for row in reader:
+            result.append(row)
+    # не надо было писать этот цикл, можно было просто
+    # result = list(csv.reader(f))
+    # headers = result[0]
+    
+    for data in result:
+        if not unique_data.get(data[1]):
+            unique_data[data[1]] = data
+        elif convert_str_to_datetime(unique_data[data[1]][-1]) < convert_str_to_datetime(data[-1]):
+            unique_data[data[1]] = data
+
+    with open(output, 'w') as dst:
+        writer = csv.writer(dst)
+        writer.writerow(headers)
+        for row in unique_data.values():
+            writer.writerow(row)
+
+if __name__ == "__main__":
+    write_last_log_to_csv('mail_log.csv', 'clean_mail_log.csv')
+
+'''
+Врядли я когда-нибудь смогу так писать, но Натальино решение
+sorted_by_date = sorted(result[1:], key = lambda x: convert_datetimestr_to_datatime(x[2]))
+т.е.
+result[1:] - это весь список данных, но без headers
+x[2] - это как раз время
+и уже имея отсортированный списко, она создает словарь
+for name, email, date in sorted_by_date:
+    result[email] = (name. email, date)
+как известно, в словаре возможна лишь одна запись в определенным ключом, 
+поэтому если email совпадает, данные перезаписываются, пока в словарь
+не будет записана самая поздняя запись, что нам и нужно
+'''

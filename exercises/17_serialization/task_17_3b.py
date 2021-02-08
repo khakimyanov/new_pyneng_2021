@@ -43,3 +43,43 @@
 > pip install graphviz
 
 """
+import yaml
+from pprint import pprint
+from draw_network_graph import draw_topology
+
+
+def transform_topology(yaml_filename):
+    result = {}
+    
+    with open(yaml_filename) as f:
+        templates = yaml.safe_load(f)
+    
+    for device, link in templates.items():
+        for local_intf, remote in link.items():
+            result.update({(device, local_intf): list(remote.items())[0]})
+    
+    for key, value in result.copy().items():
+        if result.get(value) == key:
+            del result[key]
+        
+    return result
+    
+if __name__ == "__main__":
+    #pprint(transform_topology('topology.yaml'))
+    draw_topology(transform_topology('topology.yaml'))
+
+"""
+Натальино решение - заполнять пустой словарь, проверяя нет ли в нем уже вносимых данных
+def transform_topology(topology_filename):
+    with open(topology_filename) as f:
+        raw_topology = yaml.load(f)
+    
+    formatted_topology = {}
+    for l_device, peer in raw_topology.items():
+        for l_intf, remote in peer.items():
+            r_device, r_intf = list(remote.items())[0]
+            if not (r_device, r_intf) in formatted_topology:
+                formatted_topology[(l_device, l_intf)] = (r_device, r_intf)
+                
+    return formatted_topology
+"""

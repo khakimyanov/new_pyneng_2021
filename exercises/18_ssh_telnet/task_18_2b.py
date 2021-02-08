@@ -92,9 +92,90 @@ R1(config)#logging
 R1(config)#a
 % Ambiguous command:  "a"
 """
+import yaml
+import re
+from pprint import pprint
+from netmiko import ConnectHandler
 
 # списки команд с ошибками и без:
 commands_with_errors = ["logging 0255.255.1", "logging", "a"]
 correct_commands = ["logging buffered 20010", "ip http server"]
 
 commands = commands_with_errors + correct_commands
+
+template = 'Команда "{}" выполнилась с ошибкой "{}" на устройстве {}'
+
+#Второй вариант
+
+list_of_mistakes = ['Invalid input detected', 'Incomplete command', 'Ambiguous command']
+
+
+def send_config_commands(device, config_commands, log=True):
+    good_commands = {}
+    bad_commands = {}
+    
+    with ConnectHandler(**device) as ssh:
+        if log:
+            print("Подключаюсь к {}...".format(device['host']))
+        ssh.enable()
+        for command in config_commands:
+            output = ssh.send_config_set(command)
+            if any([mistake in output for mistake in list_of_mistakes]):
+                match = re.search(r'% (.*)\.?\n', output)
+                if match:
+                    print(template.format(command, match.group(1), device['host']))
+                    bad_commands[command] = output
+            else:
+                good_commands[command] = output
+        
+    return good_commands, bad_commands
+"""
+Как всегда у Натальи более тонко. Если я проверял, если ли ошибки в строке
+    if any([mistake in output for mistake in list_of_mistakes]):
+и потом я проверял, а какая именно ошибка
+        match = re.search(r'% (.*)\.?\n', output)
+            if match:
+Наталья сделала проще
+    error_in_result = re.seach(r'% (?P<errmsg>.*)', result)
+    if error_in_result
+т.е. сам факт наличия совпадения будет означать что сообщение об ошибке
+было в полученных данных
+"""
+
+
+'''
+Первый вариант
+
+regex = (r'% (Invalid input detected.*)'
+         r'|% (Incomplete command.*)'
+         r'|% (Ambiguous command.*)')
+
+def send_config_commands(device, config_commands, log=True):
+    good_commands = {}
+    bad_commands = {}
+    
+    with ConnectHandler(**device) as ssh:
+        if log:
+            print("Подключаюсь к {}...".format(device['host']))
+        ssh.enable()
+        for command in config_commands:
+            output = ssh.send_config_set(command)
+            for line in output.split('\n'):
+                match = re.search(regex, output)
+                if match:
+                    print(template.format(command, match.group(match.lastindex), device['host']))
+                    bad_commands[command] = output
+                    break
+                else:
+                    good_commands[command] = output
+        
+    return good_commands, bad_commands
+'''
+
+if __name__ == "__main__":
+    
+    with open("r1.yaml") as f:
+        devices = yaml.safe_load(f)
+
+    for dev in devices:
+        pprint(send_config_commands(dev, commands), width=120)

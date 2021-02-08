@@ -24,3 +24,41 @@ R6           Fa 0/2          143           R S I           2811       Fa 0/0
 
 Проверить работу функции на содержимом файла sh_cdp_n_sw1.txt
 """
+import re
+from pprint import pprint
+
+
+def parse_sh_cdp_neighbors(data_input):
+    result = {}
+    regex = r'(\S+) +((?:Eth|Fa) \S+) .*((?:Eth|Fa) \S+)'
+    for line in data_input.split('\n'):
+        if 'show cdp neighbors' in line:
+            device = re.split('[>#]', line)[0]
+            result[device] = {}
+        match = re.search(regex, line)
+        if match:
+            remote_device, local_intf, remote_intf = match.groups()
+            result[device][local_intf] = {remote_device: remote_intf}
+
+    return result
+    
+if __name__ == "__main__":
+    with open('sh_cdp_n_sw1.txt', 'r') as f:
+        pprint(parse_sh_cdp_neighbors(f.read()))
+
+"""
+Наталья предлагает решение через finditer
+def parse_sh_cdp_neighbors(command_output):
+    regex = re.compile(
+        r"(?P<r_dev>\w+) +(?P<l_intf>\S+ \S+)"
+        r" +\d+ +[\w ]+ +\S+ +(?P<r_intf>\S+ \S+)"
+    )
+    connect_dict = {}
+    l_dev = re.search(r"(\S+)[>#]", command_output).group(1)
+    connect_dict[l_dev] = {}
+    
+    for match in regex.finditer(command_output):
+        r_dev, l_intf, r_intf = match.group("r_dev", "l_intf", "r_intf")
+        connect_dict[l_dev][l_intf] = {r_dev: r_intf}
+    return connect_dict
+"""

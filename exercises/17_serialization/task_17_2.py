@@ -42,10 +42,66 @@
 
 Кроме того, создан список заголовков (headers), который должен быть записан в CSV.
 """
-
+import re
+import csv
 import glob
+from pprint import pprint
 
 sh_version_files = glob.glob("sh_vers*")
-# print(sh_version_files)
+#print(sh_version_files)
 
 headers = ["hostname", "ios", "image", "uptime"]
+
+
+def parse_sh_version(sh_ver_input):
+    regex = (r'Cisco IOS Software, .+, Version (\S+),.+'
+             r'|System image file is "(.+)"'
+             r'|router uptime is (.+)')
+    
+    for row in sh_ver_input.split('\n'):
+        match = re.search(regex, row)
+        if match and match.lastindex == 1:
+            ios = match.group(1)
+        elif match and match.lastindex == 2:
+            image = match.group(2)
+        elif match and match.lastindex == 3:
+            uptime = match.group(3)
+
+    return ios, image, uptime
+
+    
+def write_inventory_to_csv(data_filenames, csv_filename):
+    result = []
+    result.append(headers)
+    
+    for file in data_filenames:
+        hostname = file.split('.')[0].split('_')[-1]
+        with open(file, 'r') as f:
+            result.append([hostname] + list(parse_sh_version(f.read())))
+    
+    with open(csv_filename, 'w') as dst:
+        writer = csv.writer(dst, quoting=csv.QUOTE_NONNUMERIC)
+        writer.writerows(result)
+
+if __name__ == "__main__":
+    write_inventory_to_csv(sh_version_files, 'routers_inventory.csv')
+
+"""
+И опять, нужно было сначала открыть csv файл на запись, и уже потом
+обрабатывать sh version файлы, сразу записывая данные в csv файл, без 
+необходимости создавать дополнительный контейнер result
+
+Наталья в свою очередь предлагает оптимизировать функцию
+def parse_sh_version(sh_ver_input):
+    regex = (r'Cisco IOS Software, .+, Version (?P<ios>\S+),.+'
+             r'System image file is "(?P<image>.+)"'
+             r'router uptime is (?P<uptime>.+)')
+    match = re.search(regex, sh_ver_input)
+    if match:
+        return match.group("ios", "image", "uptime")
+
+Как мы видим, regex идет как единое целое, я же в своем решении 
+использовал оператор "|", поэтому у меня было совпадение по одному
+элементу, а не по всему выражению.
+
+"""
