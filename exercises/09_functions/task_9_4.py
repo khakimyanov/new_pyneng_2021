@@ -44,6 +44,7 @@
 
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 """
+from pprint import pprint
 
 ignore = ["duplex", "alias", "configuration"]
 
@@ -64,3 +65,40 @@ def ignore_command(command, ignore):
         if word in command:
             ignore_status = True
     return ignore_status
+
+def convert_config_to_dict(config_filename):
+    command_dict = {}
+
+    with open(config_filename) as f:
+        for line in f:
+            if line.strip() and not line.startswith('!') and not ignore_command(line, ignore) and not line.startswith(' '):
+                command = line.rstrip()
+                command_dict[command] = []
+            elif line.startswith(' ') and not ignore_command(line, ignore):
+                command_dict[command].append(line.strip())    
+    return command_dict
+
+if __name__ == "__main__":
+    pprint(convert_config_to_dict("config_sw1.txt"))
+    
+"""
+В Натальином решении проверка 
+    not line.startswith(' '): 
+заменена
+    if line[0].isalnum()
+    
+и все not условия объеденены в скобки (правда по условия OR)
+
+def convert_config_to_dict(config_filename):
+    config_dict = {}
+    with open(config_filename) as f:
+        for line in f:
+            line = line.rstrip()
+            if line and not (line.startswith("!") or ignore_command(line, ignore)):
+                if line[0].isalnum():
+                    section = line
+                    config_dict[section] = []
+                else:
+                    config_dict[section].append(line.strip())
+    return config_dict
+"""

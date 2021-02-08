@@ -20,3 +20,10 @@
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 
 """
+template = " {:>4}    {}   {}"
+
+with open("CAM_table.txt", 'r') as f:
+	for line in f:
+		if line.strip() and line.split()[0].isdigit():
+		    vlan, mac, _, intf = line.split()
+		    print(f"{vlan:9}{mac:20}{intf}")

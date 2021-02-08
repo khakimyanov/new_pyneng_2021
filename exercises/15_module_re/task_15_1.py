@@ -23,3 +23,35 @@
 а не ввод пользователя.
 
 """
+import re
+
+def get_ip_from_cfg(filename):
+    result = []
+    regex = r"ip address (\S+) (\S+)"
+    
+    with open(filename, 'r') as f:
+        for line in f:
+            match = re.search(regex, line)
+            if match:
+                ip, mask = match.groups()
+                result.append((ip, mask))
+    return result
+
+if __name__ == "__main__":
+    print(get_ip_from_cfg("config_r1.txt"))
+
+'''
+я плохо понял findall и finditer поэтому не использова их в решении.
+Но в прошлый раз я сделал это задание с findall
+
+regex = r'ip address (\S+) (\S+)'
+
+with open(filename) as f:
+    matches = re.findall(regex, f.read())
+    
+а Наталья предложила решение с finditer
+regex = r'ip address (\S+) (\S+)'
+with open(filename) as f:
+    result = [m.groups() for m in re.finditer(regex, f.read())]
+    
+'''

@@ -15,5 +15,13 @@
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 
 """
+from sys import argv
+ignore = ["duplex", "alias", "Current configuration"]
+path = '/home/python/github/khakimyanov-9/exercises/07_files/'
 
-ignore = ["duplex", "alias", "configuration"]
+filename = argv[1]
+
+with open(path + filename, 'r') as f:
+	for line in f:
+		if not line.startswith('!') and all([word not in line for word in ignore]):
+			print(line.rstrip())

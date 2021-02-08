@@ -33,6 +33,7 @@ R6           Fa 0/2          143           R S I           2811       Fa 0/0
 
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 """
+from pprint import pprint
 
 
 def parse_cdp_neighbors(command_output):
@@ -43,8 +44,32 @@ def parse_cdp_neighbors(command_output):
     и с файлами и с выводом с оборудования.
     Плюс учимся работать с таким выводом.
     """
+    sh_cdp_neigbors = {}
+    
+    for line in command_output.split('\n'):
+        if 'show cdp neighbors' in line:
+            device = line.split('>')[0]
+        elif line.strip() and '/' in line.split()[-1]:
+            remote, local_intf, local_port, *other, remote_intf, remote_port = line.split()
+            sh_cdp_neigbors[(device, local_intf + local_port)] = (remote, remote_intf + remote_port) 
 
+    return sh_cdp_neigbors
 
 if __name__ == "__main__":
     with open("sh_cdp_n_sw1.txt") as f:
         print(parse_cdp_neighbors(f.read()))
+
+"""
+Проверка от Натальи
+    result = {}
+    for line in command_output.split("\n"):
+        line = line.strip()
+        columns = line.split()
+        if ">" in line:
+            hostname = line.split(">")[0]
+        # 3 индекс это столбец holdtime - там всегда число
+        elif len(columns) >= 5 and columns[3].isdigit():
+            r_host, l_int, l_int_num, *other, r_int, r_int_num = columns
+            result[(hostname, l_int + l_int_num)] = (r_host, r_int + r_int_num)
+    return result
+"""

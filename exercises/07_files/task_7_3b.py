@@ -17,3 +17,17 @@ Enter VLAN number: 10
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 
 """
+template = "{:<4}    {}  {}"
+mac_table = []
+
+with open("CAM_table.txt", 'r') as f:
+	for line in f:
+		if line.strip() and line.split()[0].isdigit():
+		    vlan, mac, _, intf = line.split()
+		    mac_table.append((int(vlan), mac, intf))
+
+vlan_id = input("Введите номер VLAN: ")
+
+for item in sorted(mac_table):
+	if item[0] == int(vlan_id):
+	    print(template.format(*item))

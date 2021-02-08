@@ -24,3 +24,24 @@ Out[1]: '11111111111111111111111111110000'
 
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 """
+
+template = '''Network:
+{1:<9}{2:<9}{3:<9}{4:<9}
+{1:08b} {2:08b} {3:08b} {4:08b}
+
+Mask:
+/{0}
+{5:<9}{6:<9}{7:<9}{8:<9}
+{5:08b} {6:08b} {7:08b} {8:08b}
+'''
+
+ip, mask = input("Введите адрес IP-сети в формате IP/mask: ").split('/')
+bin_mask = '1'*int(mask) + '0'*(32 - int(mask))
+
+ip_oct1, ip_oct2, ip_oct3, ip_oct4 = ip.split('.')
+
+mask_oct1, mask_oct2, mask_oct3, mask_oct4 = [int(bin_mask[0:8], 2), int(bin_mask[8:16], 2),
+                                             int(bin_mask[16:24], 2), int(bin_mask[24:32], 2)]
+
+print(template.format(mask, int(ip_oct1), int(ip_oct2), int(ip_oct3), 
+                      int(ip_oct4), mask_oct1, mask_oct3, mask_oct3, mask_oct4))	

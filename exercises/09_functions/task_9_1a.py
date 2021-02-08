@@ -43,3 +43,38 @@ port_security_template = [
 ]
 
 access_config = {"FastEthernet0/12": 10, "FastEthernet0/14": 11, "FastEthernet0/16": 17}
+
+def generate_access_config(intf_vlan_mapping, access_template, psecurity = None):
+    """
+    intf_vlan_mapping - словарь с соответствием интерфейс-VLAN такого вида:
+        {'FastEthernet0/12':10,
+         'FastEthernet0/14':11,
+         'FastEthernet0/16':17}
+    access_template - список команд для порта в режиме access
+
+    Возвращает список всех портов в режиме access с конфигурацией на основе шаблона
+    """
+    access_list = []
+    
+    for intf, vlan in intf_vlan_mapping.items():
+        access_list.append(f"interface {intf}")
+        for command in access_template:
+            if 'access vlan' in command:
+                access_list.append(f"{command} {vlan}")
+            else:
+                access_list.append(f"{command}")
+        if psecurity:
+            for line in psecurity:
+                access_list.append(f"{line}")
+    
+    return access_list
+
+if __name__ == "__main__":
+	pprint(generate_access_config(access_config, access_mode_template, port_security_template))
+
+"""
+Оказывается вместо прохождения по всем командам в списке port_security_template
+можно было написать
+if psecurity:
+    access_config.extend(psecurity)
+"""

@@ -26,3 +26,11 @@
 """
 
 ip = "192.168.3.1"
+template = '''Пример вывода для адреса {0}:
+{1:<8}  {2:<8}  {3:<8}  {4:<8}
+{1:08b}  {2:08b}  {3:08b}  {4:08b}
+'''
+
+oct1, oct2, oct3, oct4 = [int(i) for i in ip.split('.')]
+
+print(template.format(ip, oct1, oct2, oct3, oct4))

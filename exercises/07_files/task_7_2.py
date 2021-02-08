@@ -39,3 +39,12 @@ interface Ethernet0/3
 ...
 
 """
+from sys import argv
+path = '/home/python/github/khakimyanov-9/exercises/07_files/'
+
+filename = argv[1]
+
+with open(path + filename, 'r') as f:
+	for line in f:
+		if not line.startswith('!'):
+			print(line.rstrip())
