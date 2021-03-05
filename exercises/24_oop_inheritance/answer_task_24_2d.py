@@ -18,10 +18,22 @@ In [2]: from task_24_2d import MyNetmiko
 In [3]: r1 = MyNetmiko(**device_params)
 
 In [6]: r1.send_config_set('lo')
-Out[6]: 'config term\nEnter configuration commands, one per line.  End with CNTL/Z.\nR1(config)#lo\n% Incomplete command.\n\nR1(config)#end\nR1#'
+Out[6]: 'config term
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#lo
+% Incomplete command.
+
+R1(config)#end
+R1#'
 
 In [7]: r1.send_config_set('lo', ignore_errors=True)
-Out[7]: 'config term\nEnter configuration commands, one per line.  End with CNTL/Z.\nR1(config)#lo\n% Incomplete command.\n\nR1(config)#end\nR1#'
+Out[7]: 'config term
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)#lo
+% Incomplete command.
+
+R1(config)#end
+R1#'
 
 In [8]: r1.send_config_set('lo', ignore_errors=False)
 ---------------------------------------------------------------------------
@@ -32,40 +44,46 @@ ErrorInCommand                            Traceback (most recent call last)
 ...
 ErrorInCommand: При выполнении команды "lo" на устройстве 192.168.100.1 возникла ошибка "Incomplete command."
 """
-import re
 from netmiko.cisco.cisco_ios import CiscoIosSSH
+import re
+from task_24_2a import ErrorInCommand
 
 
-class ErrorInCommand(Exception):
-    """
-    Исключение генерируется, если при выполнении команды на оборудовании, возникла ошибка.
-    """
-   
 class MyNetmiko(CiscoIosSSH):
     def __init__(self, **device_params):
         super().__init__(**device_params)
         self.enable()
-    
+
+    def _check_error_in_command(self, command, result):
+        regex = "^.+\n(.*\n)*% (?P<err>.+)"
+        message = (
+            'При выполнении команды "{cmd}" на устройстве {device} '
+            'возникла ошибка "{error}"'
+        )
+        error_in_cmd = re.search(regex, result)
+        if error_in_cmd:
+            raise ErrorInCommand(
+                message.format(
+                    cmd=command, device=self.host, error=error_in_cmd.group("err")
+                )
+            )
+
     def send_command(self, command, *args, **kwargs):
-        output = super().send_command(command, *args, **kwargs)
-        if not self._check_error_in_command(command, output):
+        command_output = super().send_command(command, *args, **kwargs)
+        self._check_error_in_command(command, command_output)
+        return command_output
+
+    def send_config_set(self, commands, ignore_errors=True, *args, **kwargs):
+        if ignore_errors:
+            output = super().send_config_set(commands, *args, **kwargs)
             return output
-    
-    def send_config_set(self, commands, ignore_errors=True):
-        result = ''
-        
-        if type(commands) == str:
+        if isinstance(commands, str):
             commands = [commands]
-            
+        commands_output = ""
+        commands_output += self.config_mode()
         for command in commands:
-            output = super().send_config_set(command)
-            if ignore_errors or not self._check_error_in_command(command, output):
-                    result += output
-        
-        return result
-            
-    def _check_error_in_command(self, command, command_output):
-        regex = r'% (.*)(?:\n)*'
-        match = re.search(regex, command_output)
-        if match:
-            raise ErrorInCommand(f'При выполнении команды "{command}" на устройстве {self.host} возникла ошибка "{match.group(1)}"')
+            result = super().send_config_set(command, exit_config_mode=False)
+            commands_output += result
+            self._check_error_in_command(command, result)
+        commands_output += self.exit_config_mode()
+        return commands_output

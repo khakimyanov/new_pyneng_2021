@@ -15,6 +15,18 @@
 
 """
 import yaml
+import os
+from jinja2 import Environment, FileSystemLoader
+
+
+def generate_config(template, data_dict):
+    temp_folder, temp_file = os.path.split(template)
+    
+    env = Environment(loader=FileSystemLoader(temp_folder),
+          trim_blocks=True, lstrip_blocks=True)
+    template = env.get_template(temp_file)
+    
+    return template.render(data_dict)
 
 
 # так должен выглядеть вызов функции

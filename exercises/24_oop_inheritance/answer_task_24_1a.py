@@ -23,28 +23,19 @@ In [3]: r1 = CiscoSSH(**device_params)
 Введите пароль для режима enable: cisco
 
 In [4]: r1.send_show_command('sh ip int br')
-Out[4]: 'Interface                  IP-Address      OK? Method Status                Protocol\nEthernet0/0                192.168.100.1   YES NVRAM  up                    up      \nEthernet0/1                192.168.200.1   YES NVRAM  up                    up      \nEthernet0/2                190.16.200.1    YES NVRAM  up                    up      \nEthernet0/3                192.168.230.1   YES NVRAM  up                    up      \nEthernet0/3.100            10.100.0.1      YES NVRAM  up                    up      \nEthernet0/3.200            10.200.0.1      YES NVRAM  up                    up      \nEthernet0/3.300            10.30.0.1       YES NVRAM  up                    up      '
+Out[4]: 'Interface                  IP-Address      OK? Method Status                Protocol
+Ethernet0/0                192.168.100.1   YES NVRAM  up                    up      
+Ethernet0/1                192.168.200.1   YES NVRAM  up                    up      
+Ethernet0/2                190.16.200.1    YES NVRAM  up                    up      
+Ethernet0/3                192.168.230.1   YES NVRAM  up                    up      
+Ethernet0/3.100            10.100.0.1      YES NVRAM  up                    up      
+Ethernet0/3.200            10.200.0.1      YES NVRAM  up                    up      
+Ethernet0/3.300            10.30.0.1       YES NVRAM  up                    up      '
 
 """
 from base_connect_class import BaseSSH
 
-device_params = {"device_type": "cisco_ios", "host": "192.168.100.1"}
 
-
-class CiscoSSH(BaseSSH):
-    def __init__(self, **device_params):
-        if 'username' not in device_params:
-            device_params['username'] = input('Введите имя пользователя: ')
-        if 'password' not in device_params:
-            device_params['password'] = input('Введите пароль: ')
-        if 'secret' not in device_params:
-            device_params['secret'] = input('Введите пароль для режима enable: ')
-        
-        super().__init__(**device_params)
-        self.ssh.enable()
-
-'''
-Наталья как всегда предлагает более элегантное решение
 class CiscoSSH(BaseSSH):
     def __init__(self, **device_params):
         params = {
@@ -57,4 +48,4 @@ class CiscoSSH(BaseSSH):
                 device_params[param] = input(params[param])
         super().__init__(**device_params)
         self.ssh.enable()
-'''
+

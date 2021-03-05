@@ -26,41 +26,43 @@ ErrorInCommand                            Traceback (most recent call last)
 ErrorInCommand: При выполнении команды "lo" на устройстве 192.168.100.1 возникла ошибка "Incomplete command."
 
 """
-import re
 from netmiko.cisco.cisco_ios import CiscoIosSSH
-
-
-class ErrorInCommand(Exception):
-    """
-    Исключение генерируется, если при выполнении команды на оборудовании, возникла ошибка.
-    """
+import re
+from task_24_2a import ErrorInCommand
 
 
 class MyNetmiko(CiscoIosSSH):
     def __init__(self, **device_params):
         super().__init__(**device_params)
         self.enable()
-    
+
+    def _check_error_in_command(self, command, result):
+        regex = "% (?P<err>.+)"
+        message = (
+            'При выполнении команды "{cmd}" на устройстве {device} '
+            'возникла ошибка "{error}"'
+        )
+        error_in_cmd = re.search(regex, result)
+        if error_in_cmd:
+            raise ErrorInCommand(
+                message.format(
+                    cmd=command, device=self.host, error=error_in_cmd.group("err")
+                )
+            )
+
     def send_command(self, command):
-        output = super().send_command(command)
-        if not self._check_error_in_command(command, output):
-            return output
-    
+        command_output = super().send_command(command)
+        self._check_error_in_command(command, command_output)
+        return command_output
+
     def send_config_set(self, commands):
-        result = ''
-        
-        if type(commands) == str:
+        if isinstance(commands, str):
             commands = [commands]
-            
+        commands_output = ""
+        self.config_mode()
         for command in commands:
-            output = super().send_config_set(command)
-            if not self._check_error_in_command(command, output):
-                result += output
-        
-        return result
-            
-    def _check_error_in_command(self, command, command_output):
-        regex = r'% (.*)(?:\n)*'
-        match = re.search(regex, command_output)
-        if match:
-            raise ErrorInCommand(f'При выполнении команды "{command}" на устройстве {self.host} возникла ошибка "{match.group(1)}"')
+            result = super().send_config_set(command, exit_config_mode=False)
+            commands_output += result
+            self._check_error_in_command(command, result)
+        self.exit_config_mode()
+        return commands_output

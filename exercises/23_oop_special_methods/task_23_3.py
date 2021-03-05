@@ -75,3 +75,46 @@ topology_example2 = {
     ("R1", "Eth0/4"): ("R7", "Eth0/0"),
     ("R1", "Eth0/6"): ("R9", "Eth0/0"),
 }
+
+class Topology:
+    def __init__(self, topology_dict):
+        self.topology = self._normalize(topology_dict)
+        
+    def __add__(self, other):
+        common_topology = self.topology.copy()
+        common_topology.update(other.topology)
+        
+        return Topology(common_topology)
+           
+    def _normalize(self, full_topology):
+        clean_topology = {}
+        
+        for local_link, remote_link in full_topology.items():
+            if clean_topology.get(remote_link) != local_link:
+                clean_topology[local_link] = remote_link        
+        
+        return clean_topology
+    
+    def delete_link(self, local_link, remote_link):
+        if self.topology.get(local_link) and self.topology[local_link] == remote_link:
+            del self.topology[local_link]
+        elif self.topology.get(remote_link) and self.topology[remote_link] == local_link:
+            del self.topology[remote_link]
+        else:
+            print("Такого соединения нет")
+    
+    def delete_node(self, node_to_delete):
+        non_exist = True
+        
+        for local_link, remote_link in self.topology.copy().items():
+            if node_to_delete in local_link or node_to_delete in remote_link:
+                del self.topology[local_link]
+                non_exist = False
+        if non_exist:
+            print("Такого устройства нет")
+
+"""
+Вариант решения от Натальи
+    def __add__(self, other):
+        return Topology({**self.topology, **other.topology})
+"""
